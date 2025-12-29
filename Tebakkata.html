@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tebak Kata— Word Guess</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#0f1a3a;
+      --text:#eaf0ff;
+      --muted:#b7c2ffcc;
+      --good:#42f5b6;
+      --warn:#ffd166;
+      --bad:#ff5c7a;
+      --accent:#7c5cff;
+      --accent2:#31c6ff;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 700px at 20% 10%, #1a2b63 0%, transparent 55%),
+                  radial-gradient(1000px 700px at 80% 20%, #3b1d6b 0%, transparent 55%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
+    .wrap{ max-width:980px; margin:0 auto; padding:28px 18px 40px; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background: conic-gradient(from 180deg, var(--accent), var(--accent2), var(--good), var(--accent));
+      box-shadow: 0 10px 30px rgba(124,92,255,.35);
+    }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:2px 0 0; font-size:12px; color:var(--muted); }
+
+    .topbar{ display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; }
+    .pill{
+      background: rgba(17,26,51,.7);
+      border: 1px solid rgba(42,58,106,.7);
+      padding:10px 12px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+    }
+    .btn{
+      border:none;
+      color:var(--text);
+      background: linear-gradient(135deg, rgba(124,92,255,.95), rgba(49,198,255,.85));
+      padding:10px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    .btn.secondary{
+      background: rgba(17,26,51,.7);
+      border: 1px solid rgba(42,58,106,.85);
+    }
+
+    .grid{ display:grid; grid-template-columns: 1.15fr .85fr; gap:14px; }
+    @media (max-width: 900px){ .grid{ grid-template-columns: 1fr; } .topbar{ justify-content:flex-start; } }
+
+    .card{
+      background: rgba(17,26,51,.55);
+      border: 1px solid rgba(42,58,106,.75);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:16px 16px 10px;
+      border-bottom: 1px solid rgba(42,58,106,.55);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      font-size:14px;
+      color:var(--muted);
+      margin:0;
+      letter-spacing:.3px;
+      text-transform:uppercase;
+    }
+    .content{ padding:16px; }
+
+    .wordBox{ display:flex; flex-wrap:wrap; gap:8px; padding:8px 0 2px; min-height:58px; }
+    .slot{
+      width:42px;height:52px;border-radius:14px;
+      border: 1px solid rgba(42,58,106,.9);
+      background: rgba(11,16,32,.35);
+      display:grid; place-items:center;
+      font-weight:900; font-size:20px;
+      text-transform: uppercase;
+    }
+
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+    input[type="text"]{
+      flex:1; min-width:220px;
+      padding:12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(42,58,106,.95);
+      background: rgba(11,16,32,.35);
+      color: var(--text);
+      outline:none;
+      font-weight:700;
+    }
+
+    .helper{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+    .hint{
+      color: var(--muted);
+      font-size:13px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(42,58,106,.85);
+      background: rgba(11,16,32,.25);
+      flex: 1 1 360px;
+    }
+    .toast{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(42,58,106,.7);
+      background: rgba(11,16,32,.25);
+      color: var(--muted);
+      min-height:42px;
+    }
+
+    .sideList{ display:grid; gap:10px; }
+    .mini{ padding:14px 14px; }
+    .mini h3{ margin:0 0 8px; font-size:13px; color: var(--muted); text-transform: uppercase; letter-spacing:.35px; }
+    .statRow{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 0;
+      border-bottom: 1px solid rgba(42,58,106,.45);
+    }
+    .statRow:last-child{ border-bottom:none; }
+
+    /* Music panel */
+    #musicPanel{
+      position:fixed; right:16px; bottom:16px; z-index:9999;
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      background:rgba(17,26,51,.75); border:1px solid rgba(42,58,106,.85);
+      backdrop-filter: blur(10px);
+      padding:10px 12px; border-radius:16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    #musicInfo{ font-size:12px; color: rgba(183,194,255,.85); user-select:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Tebak Kata ( ringgabdy.___ ) </h1>
+          <p class="sub">Level, skor, hint bertahap, streak, dan timer opsional.</p>
+        </div>
+      </div>
+
+      <div class="topbar">
+        <div class="pill">LEVEL <b id="level">1</b></div>
+        <div class="pill">SKOR <b id="score">0</b></div>
+        <div class="pill">STREAK <b id="streak">0</b></div>
+        <button class="btn secondary" id="btnReset" type="button">Reset</button>
+        <button class="btn" id="btnNext" type="button">Kata Baru</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <div class="cardHeader">
+          <div>
+            <p class="title">Tantangan</p>
+            <div style="font-size:12px;color:rgba(183,194,255,.8)">
+              Kategori: <b id="category">—</b> • Panjang: <b id="len">—</b> huruf
+            </div>
+          </div>
+          <div style="font-size:12px;color:rgba(183,194,255,.8)">
+            ⏱ <b id="timer">—</b>
+          </div>
+        </div>
+
+        <div class="content">
+          <div class="wordBox" id="wordBox"></div>
+
+          <div class="row">
+            <input id="guess" type="text" placeholder="Ketik jawaban... lalu Enter" />
+            <button class="btn" id="btnSubmit" type="button">Tebak</button>
+            <button class="btn secondary" id="btnHint" type="button">Hint</button>
+          </div>
+
+          <div class="helper">
+            <div class="hint">Hint: <b id="hintText">Tekan tombol Hint kalau kamu butuh bantuan 😉</b></div>
+          </div>
+
+          <div class="toast" id="toast">Masukkan tebakanmu. Tips: gunakan huruf tanpa spasi.</div>
+        </div>
+      </section>
+
+      <aside class="sideList">
+        <section class="card mini">
+          <h3>Pengaturan</h3>
+          <label style="font-size:12px;color:rgba(183,194,255,.8)">Mode</label>
+          <select id="mode" style="width:100%;padding:10px 12px;border-radius:14px;background:rgba(11,16,32,.35);border:1px solid rgba(42,58,106,.95);color:var(--text);font-weight:700">
+            <option value="normal" selected>Normal</option>
+            <option value="timed">Timed (45 detik)</option>
+          </select>
+
+          <div style="height:10px"></div>
+
+          <label style="font-size:12px;color:rgba(183,194,255,.8)">Kategori</label>
+          <select id="cat" style="width:100%;padding:10px 12px;border-radius:14px;background:rgba(11,16,32,.35);border:1px solid rgba(42,58,106,.95);color:var(--text);font-weight:700">
+            <option value="mix" selected>Mix</option>
+            <option value="teknologi">Teknologi</option>
+            <option value="hewan">Hewan</option>
+            <option value="makanan">Makanan</option>
+            <option value="tempat">Tempat</option>
+          </select>
+        </section>
+
+        <section class="card mini">
+          <h3>Statistik</h3>
+          <div class="statRow"><span>Benar</span><b id="correct">0</b></div>
+          <div class="statRow"><span>Salah</span><b id="wrong">0</b></div>
+          <div class="statRow"><span>Hint dipakai</span><b id="hintsUsed">0</b></div>
+          <div class="statRow"><span>Akurasi</span><b id="accuracy">0%</b></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <!-- AUDIO -->
+  <audio id="bgm" preload="auto" loop>
+    <source src="lagu.mp3" type="audio/mpeg" />
+    Browser kamu tidak mendukung audio.
+  </audio>
+
+  <div id="musicPanel">
+    <button id="btnMusic" class="btn" type="button">▶ Play Musik</button>
+    <button id="btnMute" class="btn secondary" type="button" disabled>🔊 Volume</button>
+    <span id="musicInfo">BGM siap</span>
+  </div>
+
+  <script>
+    // =========================
+    // DATA KATA
+    // =========================
+    const WORDS = [
+      { word: "javascript", clue1: "Bahasa pemrograman populer untuk web.", clue2: "Sering dipakai bareng HTML & CSS.", clue3: "Singkatannya JS.", category: "teknologi" },
+      { word: "database", clue1: "Tempat menyimpan data.", clue2: "Contoh: MySQL.", clue3: "Diakses dengan query.", category: "teknologi" },
+      { word: "komodo", clue1: "Reptil besar dari Indonesia.", clue2: "Ikonik di NTT.", clue3: "Dijuluki naga.", category: "hewan" },
+      { word: "orangutan", clue1: "Primata besar.", clue2: "Ada di Kalimantan & Sumatra.", clue3: "Suka bergelantungan.", category: "hewan" },
+      { word: "rendang", clue1: "Masakan khas Padang.", clue2: "Dimasak lama dengan santan.", clue3: "Terkenal banget.", category: "makanan" },
+      { word: "pempek", clue1: "Khas Palembang.", clue2: "Ikan + sagu.", clue3: "Pakai cuko.", category: "makanan" },
+      { word: "borobudur", clue1: "Candi besar.", clue2: "Di Jawa Tengah.", clue3: "Wisata sejarah.", category: "tempat" },
+      { word: "bali", clue1: "Pulau wisata.", clue2: "Pantai & budaya.", clue3: "Pulau Dewata.", category: "tempat" },
+    ];
+
+    // =========================
+    // GAME STATE
+    // =========================
+    const $ = (q) => document.querySelector(q);
+    const el = {
+      wordBox: $("#wordBox"),
+      guess: $("#guess"),
+      toast: $("#toast"),
+      hintText: $("#hintText"),
+      category: $("#category"),
+      len: $("#len"),
+      timer: $("#timer"),
+      level: $("#level"),
+      score: $("#score"),
+      streak: $("#streak"),
+      correct: $("#correct"),
+      wrong: $("#wrong"),
+      hintsUsed: $("#hintsUsed"),
+      accuracy: $("#accuracy"),
+      mode: $("#mode"),
+      cat: $("#cat"),
+      btnSubmit: $("#btnSubmit"),
+      btnHint: $("#btnHint"),
+      btnNext: $("#btnNext"),
+      btnReset: $("#btnReset"),
+    };
+
+    const state = {
+      level: 1,
+      score: 0,
+      streak: 0,
+      correct: 0,
+      wrong: 0,
+      hintsUsed: 0,
+      current: null,
+      hintStage: 0,
+      used: new Set(),
+      timerId: null,
+      timeLeft: 0,
+    };
+
+    function normalize(s){
+      return (s||"").toLowerCase().trim().replace(/\s+/g,"");
+    }
+
+    function updateStats(){
+      el.level.textContent = state.level;
+      el.score.textContent = state.score;
+      el.streak.textContent = state.streak;
+      el.correct.textContent = state.correct;
+      el.wrong.textContent = state.wrong;
+      el.hintsUsed.textContent = state.hintsUsed;
+      const total = state.correct + state.wrong;
+      el.accuracy.textContent = total ? Math.round((state.correct/total)*100) + "%" : "0%";
+    }
+
+    function buildSlots(word){
+      el.wordBox.innerHTML = "";
+      for(let i=0;i<word.length;i++){
+        const d = document.createElement("div");
+        d.className = "slot";
+        d.textContent = "•";
+        el.wordBox.appendChild(d);
+      }
+    }
+
+    function revealAll(){
+      const w = state.current.word.toUpperCase().split("");
+      [...el.wordBox.children].forEach((slot,i)=> slot.textContent = w[i]);
+    }
+
+    function stopTimer(){
+      if(state.timerId){ clearInterval(state.timerId); state.timerId = null; }
+    }
+
+    function startTimer(){
+      stopTimer();
+      if(el.mode.value !== "timed"){
+        el.timer.textContent = "—";
+        return;
+      }
+      state.timeLeft = 45;
+      el.timer.textContent = state.timeLeft + "s";
+      state.timerId = setInterval(()=>{
+        state.timeLeft--;
+        el.timer.textContent = state.timeLeft + "s";
+        if(state.timeLeft <= 0){
+          stopTimer();
+          state.wrong++;
+          state.streak = 0;
+          el.toast.textContent = "Waktu habis! Jawaban: " + state.current.word.toUpperCase();
+          revealAll();
+          updateStats();
+        }
+      },1000);
+    }
+
+    function getPool(){
+      const cat = el.cat.value;
+      return cat === "mix" ? WORDS : WORDS.filter(w=>w.category===cat);
+    }
+
+    function newWord(){
+      const pool = getPool();
+      let pick = pool.find(w => !state.used.has(w.word));
+      if(!pick){
+        state.used.clear();
+        pick = pool[Math.floor(Math.random()*pool.length)];
+      }
+      state.used.add(pick.word);
+      state.current = pick;
+      state.hintStage = 0;
+
+      el.category.textContent = pick.category;
+      el.len.textContent = pick.word.length;
+      el.hintText.textContent = "Tekan tombol Hint kalau kamu butuh bantuan 😉";
+      el.toast.textContent = "Masukkan tebakanmu.";
+      el.guess.value = "";
+      el.guess.focus();
+
+      buildSlots(pick.word);
+      startTimer();
+    }
+
+    function tryGuess(){
+      if(!state.current) return;
+      if(el.mode.value === "timed" && state.timeLeft <= 0) return;
+
+      const g = normalize(el.guess.value);
+      const ans = normalize(state.current.word);
+
+      if(!g){ el.toast.textContent = "Tebakan kosong 😅"; return; }
+
+      if(g === ans){
+        stopTimer();
+        state.correct++;
+        state.streak++;
+        state.level++;
+        state.score += 100;
+        el.toast.textContent = "BENAR! Jawaban: " + state.current.word.toUpperCase();
+        revealAll();
+        updateStats();
+      } else {
+        state.wrong++;
+        state.streak = 0;
+        state.score = Math.max(0, state.score - 10);
+        el.toast.textContent = "Salah 😬 coba lagi!";
+        updateStats();
+      }
+    }
+
+    function useHint(){
+      if(!state.current) return;
+      if(el.mode.value === "timed" && state.timeLeft <= 0) return;
+
+      state.hintStage++;
+      state.hintsUsed++;
+      state.score = Math.max(0, state.score - 10);
+
+      const c = state.current;
+      const hint = state.hintStage === 1 ? c.clue1
+                 : state.hintStage === 2 ? c.clue2
+                 : c.clue3;
+
+      el.hintText.textContent = hint || "Hint habis!";
+      el.toast.textContent = "Hint dipakai (-10 poin).";
+      updateStats();
+    }
+
+    // events
+    el.btnSubmit.addEventListener("click", tryGuess);
+    el.btnHint.addEventListener("click", useHint);
+    el.btnNext.addEventListener("click", newWord);
+    el.btnReset.addEventListener("click", () => {
+      stopTimer();
+      state.level=1; state.score=0; state.streak=0; state.correct=0; state.wrong=0; state.hintsUsed=0; state.used.clear();
+      updateStats();
+      newWord();
+    });
+    el.guess.addEventListener("keydown",(e)=>{ if(e.key==="Enter") tryGuess(); });
+    el.mode.addEventListener("change", () => newWord());
+    el.cat.addEventListener("change", () => newWord());
+
+    updateStats();
+    newWord();
+
+    // =========================
+    // MUSIK (BGM)
+    // =========================
+    const bgm = document.getElementById("bgm");
+    const btnMusic = document.getElementById("btnMusic");
+    const btnMute  = document.getElementById("btnMute");
+    const musicInfo= document.getElementById("musicInfo");
+
+    bgm.volume = 0.35;
+
+    function updateMusicUI(){
+      if(!bgm.paused){
+        btnMusic.textContent = "⏸ Pause Musik";
+        btnMute.disabled = false;
+        btnMute.textContent = bgm.muted ? "🔇 Muted" : "🔊 Volume";
+        musicInfo.textContent = "Musik jalan";
+      } else {
+        btnMusic.textContent = "▶ Play Musik";
+        btnMute.disabled = true;
+        musicInfo.textContent = "Musik berhenti";
+      }
+    }
+
+    btnMusic.addEventListener("click", async () => {
+      if(bgm.paused){
+        try{ await bgm.play(); } catch(e){ musicInfo.textContent="Autoplay diblok, klik lagi."; }
+      } else {
+        bgm.pause();
+      }
+      updateMusicUI();
+    });
+
+    btnMute.addEventListener("click", () => {
+      bgm.muted = !bgm.muted;
+      updateMusicUI();
+    });
+
+    updateMusicUI();
+  </script>
+</body>
+</html>
